@@ -1,5 +1,6 @@
 import pandas as pd
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import PatternFill
 import os
 
 # 获取当前工作目录
@@ -83,4 +84,30 @@ for index, row in result.iterrows():
 new_file_result = os.path.join(current_directory, 'result_new.xlsx')
 wb_result.save(new_file_result)
 
-print(f'Results saved in {new_file_result}')
+# 读取A.xlsx文件
+wb_A = load_workbook(filename=file_A)
+ws_A = wb_A.active
+
+# 读取result_new.xlsx文件
+wb_result_new = load_workbook(filename=new_file_result)
+ws_result_new = wb_result_new.active
+
+# 初始化需要刷绿的代码列表
+codes_to_highlight = set()
+
+# 遍历result_new.xlsx中的数据
+for row in ws_result_new.iter_rows(min_row=2, values_only=True):
+    if row[4] == 0:  # 检查差值是否为0
+        code = str(row[2])  # 获取代码
+        codes_to_highlight.add(code)
+
+# 在A文件中找到所有需要刷绿的代码，并将其背景色设置为绿色
+for i, code_a in enumerate(df_A['代码']):
+    if str(code_a) in codes_to_highlight:
+        cell = ws_A.cell(row=i+2, column=df_A.columns.get_loc('代码')+1)
+        cell.fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
+
+# 保存修改后的A.xlsx文件
+wb_A.save(file_A)
+
+print(f"Cells with a difference of 0 in '差值' column highlighted in green in file A.xlsx")
